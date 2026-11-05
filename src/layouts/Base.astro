@@ -1,0 +1,51 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '@fontsource-variable/newsreader/opsz.css';
+import '@fontsource-variable/newsreader/opsz-italic.css';
+import '@/styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Hide from search engines (member pages) */
+  noindex?: boolean;
+  /** Extra class on <body> */
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description = 'A ten-day copywork challenge. Copy great writing by hand and get your attention back.',
+  noindex = true,
+  bodyClass,
+} = Astro.props;
+
+const fullTitle = title ? `${title} · Storywork` : 'Storywork';
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161513" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL('/og.png', Astro.site)} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <ClientRouter fallback="swap" />
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,19 @@
+---
+import Library from '@/layouts/Library.astro';
+import PageTitle from '@/components/ui/PageTitle.astro';
+import ItemList, { type ListItem } from '@/components/ui/ItemList.astro';
+import { collectionById } from '@/data/collections';
+
+const c = collectionById('method');
+const items: ListItem[] = [
+  { title: 'Why copy by hand', description: 'What the hand notices that the eye skips.' },
+  { title: 'What you need', description: 'A pen, a notebook, thirty minutes, and a closed door.' },
+  { title: 'How to copy', description: 'Read once, copy slowly, check every mark.' },
+  { title: 'After you copy', description: 'The question under each passage, and why to answer it on paper.' },
+];
+---
+
+<Library title={c.name} active="method">
+  <PageTitle title={c.name} intro={c.intro} />
+  <ItemList items={items} />
+</Library>

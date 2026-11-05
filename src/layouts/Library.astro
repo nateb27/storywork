@@ -1,0 +1,84 @@
+---
+/**
+ * Layout for the library's collection pages: a quiet header, one
+ * narrow column, and the deck of collection cards pinned to the
+ * bottom of the screen. The deck persists between pages so the
+ * raised card can travel from one collection to the next.
+ */
+import Base from './Base.astro';
+import Mark from '@/components/ui/Mark.astro';
+import Deck from '@/components/deck/Deck';
+import type { CollectionId } from '@/data/collections';
+
+interface Props {
+  title?: string;
+  active?: CollectionId | null;
+  locked?: CollectionId[];
+}
+
+const { title, active = null, locked = [] } = Astro.props;
+---
+
+<Base title={title} bodyClass="has-deck">
+  <header class="site-header">
+    <a href="/library" class="site-header__mark" aria-label="Storywork library">
+      <Mark />
+    </a>
+    <a href="/account" class="site-header__account">Account</a>
+  </header>
+  <main id="main" class="library-main">
+    <slot />
+  </main>
+  <Deck client:load transition:persist="deck" active={active} locked={locked} />
+</Base>
+
+<style>
+  .site-header {
+    position: absolute;
+    inset: 0 0 auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-4);
+    z-index: 10;
+  }
+
+  .site-header__mark {
+    display: inline-flex;
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .site-header__mark:hover {
+    transform: rotate(-6deg);
+  }
+
+  .site-header__account {
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: var(--paper-raised);
+    color: var(--grey);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 160ms ease;
+  }
+
+  .site-header__account:hover {
+    color: var(--ink);
+  }
+
+  .library-main {
+    width: 100%;
+    max-width: calc(var(--measure) + 2 * var(--gutter));
+    margin: 0 auto;
+    padding: var(--space-9) var(--gutter) calc(var(--deck-peek) + var(--space-9));
+  }
+
+  @media (max-width: 640px) {
+    .library-main {
+      padding-top: var(--space-8);
+    }
+  }
+</style>

@@ -1,0 +1,37 @@
+---
+import Base from '@/layouts/Base.astro';
+import Mark from '@/components/ui/Mark.astro';
+---
+
+<Base title="Page not found">
+  <main id="main" class="nf">
+    <Mark size={40} />
+    <h1 class="serif">This page isn’t in the library.</h1>
+    <p>The link may be old, or the page may have moved.</p>
+    <a class="button" href="/library">Back to the library</a>
+  </main>
+</Base>
+
+<style>
+  .nf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    min-height: 100svh;
+    padding: var(--space-6) var(--gutter);
+    text-align: center;
+  }
+
+  h1 {
+    margin-top: var(--space-4);
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    line-height: 1.15;
+  }
+
+  p {
+    margin-bottom: var(--space-4);
+    color: var(--grey);
+  }
+</style>

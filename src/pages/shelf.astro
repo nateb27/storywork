@@ -1,0 +1,18 @@
+---
+import Library from '@/layouts/Library.astro';
+import PageTitle from '@/components/ui/PageTitle.astro';
+import { collectionById } from '@/data/collections';
+
+const c = collectionById('shelf');
+---
+
+<Library title={c.name} active="shelf">
+  <PageTitle title={c.name} intro={c.intro} />
+  <p class="placeholder">The books arrive with the passages.</p>
+</Library>
+
+<style>
+  .placeholder {
+    color: var(--grey);
+  }
+</style>

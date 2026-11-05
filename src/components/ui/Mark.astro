@@ -1,0 +1,32 @@
+---
+/**
+ * The Storywork mark: four small cards, fanned, in the collection
+ * colours. A miniature of the deck.
+ */
+interface Props {
+  size?: number;
+}
+const { size = 28 } = Astro.props;
+const cards = [
+  { color: 'var(--card-method)', rotate: -14, x: 6 },
+  { color: 'var(--card-ten)', rotate: -4, x: 10 },
+  { color: 'var(--card-more)', rotate: 6, x: 14 },
+  { color: 'var(--card-shelf)', rotate: 16, x: 18 },
+];
+---
+
+<svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+  {
+    cards.map((c) => (
+      <rect
+        x={c.x - 5}
+        y="7"
+        width="11"
+        height="16"
+        rx="2"
+        fill={c.color}
+        transform={`rotate(${c.rotate} ${c.x} 28)`}
+      />
+    ))
+  }
+</svg>

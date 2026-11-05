@@ -1,0 +1,20 @@
+---
+import Library from '@/layouts/Library.astro';
+import PageTitle from '@/components/ui/PageTitle.astro';
+import ItemList, { type ListItem } from '@/components/ui/ItemList.astro';
+import { collectionById } from '@/data/collections';
+
+const c = collectionById('ten');
+// Milestone 1 placeholder list
+const items: ListItem[] = Array.from({ length: 10 }, (_, i) => ({
+  label: `Day ${i + 1}`,
+  title: 'Lesson title to come',
+  description: 'One line about the technique this day teaches.',
+  pill: i === 0 ? 'today' : null,
+}));
+---
+
+<Library title={c.name} active="ten">
+  <PageTitle title={c.name} intro={c.intro} />
+  <ItemList items={items} />
+</Library>

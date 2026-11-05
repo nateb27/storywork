@@ -1,0 +1,75 @@
+---
+/**
+ * Progress drawn as tally marks: one stroke per day, crossed in fives.
+ * Done days in ink, the rest as faint pencil.
+ */
+interface Props {
+  total: number;
+  done: number;
+}
+const { total, done } = Astro.props;
+
+const MARK = { height: 26, gap: 8, groupGap: 16, stroke: 2, tilt: 1.5 };
+const groups = Math.ceil(total / 5);
+const groupWidth = 3 * MARK.gap;
+const width = groups * groupWidth + (groups - 1) * MARK.groupGap + 16;
+const height = MARK.height + 8;
+
+const marks: Array<{ x1: number; y1: number; x2: number; y2: number; done: boolean }> = [];
+for (let g = 0; g < groups; g++) {
+  const gx = 8 + g * (groupWidth + MARK.groupGap);
+  for (let i = 0; i < 5; i++) {
+    const n = g * 5 + i;
+    if (n >= total) break;
+    if (i < 4) {
+      const x = gx + i * MARK.gap;
+      marks.push({ x1: x + MARK.tilt, y1: 4, x2: x, y2: 4 + MARK.height, done: n < done });
+    } else {
+      marks.push({ x1: gx - 6, y1: MARK.height - 2, x2: gx + groupWidth + 6, y2: 8, done: n < done });
+    }
+  }
+}
+---
+
+<figure class="tally">
+  <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+    {
+      marks.map((m) => (
+        <line
+          x1={m.x1}
+          y1={m.y1}
+          x2={m.x2}
+          y2={m.y2}
+          stroke-width={MARK.stroke}
+          stroke-linecap="round"
+          class:list={['tally__mark', { 'tally__mark--done': m.done }]}
+        />
+      ))
+    }
+  </svg>
+  <figcaption>{done} of {total} days done</figcaption>
+</figure>
+
+<style>
+  .tally {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .tally__mark {
+    stroke: var(--grey-faint);
+    opacity: 0.45;
+  }
+
+  .tally__mark--done {
+    stroke: var(--ink);
+    opacity: 1;
+  }
+
+  figcaption {
+    color: var(--grey);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+</style>

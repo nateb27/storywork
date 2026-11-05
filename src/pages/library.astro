@@ -1,0 +1,88 @@
+---
+import Library from '@/layouts/Library.astro';
+import TallyProgress from '@/components/ui/TallyProgress.astro';
+
+// Milestone 1 placeholder: wired to real content and progress later.
+const today = {
+  day: 1,
+  title: 'The First Sentence',
+  summary: 'How an opening line makes a promise the rest of the book has to keep.',
+  href: '/days',
+};
+const done = 0;
+---
+
+<Library title="Library">
+  <section class="today" aria-labelledby="today-title">
+    <p class="today__eyebrow"><span class="pill pill--today">Today</span> Day {today.day} of 10</p>
+    <h1 id="today-title" class="today__title serif">{today.title}</h1>
+    <p class="today__summary">{today.summary}</p>
+    <div class="today__actions">
+      <a class="button" href={today.href}>Begin today’s work</a>
+      <a class="button button--quiet" href="/days">All ten days</a>
+    </div>
+  </section>
+
+  <div class="progress">
+    <TallyProgress total={10} done={done} />
+  </div>
+
+  <hr class="rule" />
+
+  <section class="first-time">
+    <h2 class="serif">Before you start</h2>
+    <p>
+      You need a pen, a notebook, and about thirty minutes where no one needs you.
+      Read <a href="/method">The Method</a> once before Day 1. It’s short.
+    </p>
+  </section>
+</Library>
+
+<style>
+  .today__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+
+  .today__title {
+    font-size: var(--text-h1);
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  .today__summary {
+    margin-top: var(--space-4);
+    max-width: 30rem;
+    color: var(--grey);
+    font-size: var(--text-body);
+    line-height: 1.6;
+  }
+
+  .today__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+  }
+
+  .progress {
+    margin-top: var(--space-8);
+  }
+
+  .first-time h2 {
+    margin-bottom: var(--space-3);
+    font-size: var(--text-h2);
+    line-height: 1.2;
+  }
+
+  .first-time p {
+    color: var(--grey);
+    font-size: var(--text-body);
+    line-height: 1.6;
+  }
+</style>
