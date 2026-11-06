@@ -1,0 +1,66 @@
+---
+/**
+ * A Five More day for a member who hasn't added it: the title and what
+ * it teaches, then the offer. The passage and lesson stay on the server.
+ */
+import Library from '@/layouts/Library.astro';
+import AddonOffer from '@/components/ui/AddonOffer.astro';
+import type { Day } from '@/lib/content';
+
+interface Props {
+  day: Day;
+}
+const { day } = Astro.props;
+const d = day.data;
+---
+
+<Library title={`Day ${d.day}: ${d.title}`} active="more">
+  <a class="locked__back" href="/more">← Five More</a>
+  <p class="locked__meta"><span class="pill pill--locked">Locked</span> Day {d.day} · {d.estimated_minutes} minutes</p>
+  <h1 class="locked__title serif">{d.title}</h1>
+  <p class="locked__summary">{d.summary} From {d.source.author}’s <cite>{d.source.work}</cite>.</p>
+  <div class="locked__offer">
+    <AddonOffer />
+  </div>
+</Library>
+
+<style>
+  .locked__back {
+    display: inline-block;
+    margin-bottom: var(--space-7);
+    color: var(--grey);
+    font-size: var(--text-sm);
+    text-decoration: none;
+  }
+
+  .locked__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+
+  .locked__title {
+    font-size: var(--text-h1);
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  .locked__summary {
+    margin-top: var(--space-4);
+    color: var(--grey);
+    font-size: var(--text-body);
+    line-height: 1.6;
+  }
+
+  .locked__summary cite {
+    font-style: italic;
+  }
+
+  .locked__offer {
+    margin-top: var(--space-7);
+  }
+</style>

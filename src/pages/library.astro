@@ -1,49 +1,133 @@
 ---
 import Library from '@/layouts/Library.astro';
 import TallyProgress from '@/components/ui/TallyProgress.astro';
-import { getDay, dayHref } from '@/lib/content';
+import AddonOffer from '@/components/ui/AddonOffer.astro';
+import { getDay, dayHref, CORE_DAYS, TOTAL_DAYS } from '@/lib/content';
+import { doneCount, hasAddon, nextDay } from '@/lib/access';
+import { memberProgress } from '@/lib/member';
 
-// The member's next unfinished day; progress arrives in milestone 3.
-const done = 0;
-const next = await getDay(done + 1);
-if (!next) throw new Error('Day content missing');
-const today = {
-  day: next.data.day,
-  title: next.data.title,
-  summary: next.data.summary,
-  href: dayHref(next.data.day),
-};
+const { products } = Astro.locals;
+const progress = await memberProgress(Astro.locals);
+const ownsAddon = hasAddon(products);
+const coreDone = doneCount(progress, 1, CORE_DAYS);
+const moreDone = doneCount(progress, CORE_DAYS + 1, TOTAL_DAYS);
+const nextN = nextDay(progress, products);
+const next = nextN ? await getDay(nextN) : undefined;
+
+// Which state the member is in
+const state = next ? 'working' : ownsAddon ? 'all-done' : 'ten-done';
+const ofTotal = nextN && nextN > CORE_DAYS ? `Day ${nextN} of ${TOTAL_DAYS}` : `Day ${nextN} of ${CORE_DAYS}`;
+const nothingDone = coreDone === 0;
 ---
 
 <Library title="Library">
-  <section class="today" aria-labelledby="today-title">
-    <p class="today__eyebrow"><span class="pill pill--today">Today</span> Day {today.day} of 10</p>
-    <h1 id="today-title" class="today__title serif">{today.title}</h1>
-    <p class="today__summary">{today.summary}</p>
-    <div class="today__actions">
-      <a class="button" href={today.href}>Begin today’s work</a>
-      <a class="button button--quiet" href="/days">All ten days</a>
-    </div>
-  </section>
+  {
+    state === 'working' && next && (
+      <section class="today" aria-labelledby="today-title" data-today>
+        <p class="today__eyebrow">
+          <span class="today__when">
+            <span class="pill pill--today">Today</span>
+          </span>
+          <span class="today__when-done">Today’s work is done</span>
+          <span aria-hidden="true">·</span>
+          {ofTotal}
+        </p>
+        <h1 id="today-title" class="today__title serif">{next.data.title}</h1>
+        <p class="today__summary">{next.data.summary}</p>
+        <p class="today__summary today__summary--done">
+          This one will keep until tomorrow. Let today’s passage settle.
+        </p>
+        <div class="today__actions">
+          <a class="button today__go" href={dayHref(next.data.day)}>
+            {nothingDone ? 'Begin Day 1' : 'Begin today’s work'}
+          </a>
+          <a class="button button--quiet today__peek" href={dayHref(next.data.day)}>
+            Look ahead
+          </a>
+          <a class="button button--quiet" href={nextN! > CORE_DAYS ? '/more' : '/days'}>
+            {nextN! > CORE_DAYS ? 'All of Five More' : 'All ten days'}
+          </a>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    state === 'ten-done' && (
+      <section class="today" aria-labelledby="today-title">
+        <p class="today__eyebrow">Ten days, done</p>
+        <h1 id="today-title" class="today__title serif">You finished the challenge.</h1>
+        <p class="today__summary">
+          Ten passages, copied by hand. Keep the notebook somewhere you’ll see it, and read one of the
+          books on <a href="/shelf">The Shelf</a> all the way through.
+        </p>
+      </section>
+    )
+  }
+
+  {
+    state === 'all-done' && (
+      <section class="today" aria-labelledby="today-title">
+        <p class="today__eyebrow">Fifteen days, done</p>
+        <h1 id="today-title" class="today__title serif">That’s all fifteen.</h1>
+        <p class="today__summary">
+          The habit is yours now. Pick a book from <a href="/shelf">The Shelf</a> and keep copying a
+          page a day.
+        </p>
+      </section>
+    )
+  }
 
   <div class="progress">
-    <TallyProgress total={10} done={done} />
+    <TallyProgress total={CORE_DAYS} done={coreDone} />
+    {ownsAddon && <TallyProgress total={TOTAL_DAYS - CORE_DAYS} done={moreDone} label="of Five More done" />}
   </div>
 
-  <hr class="rule" />
+  {
+    state === 'ten-done' && (
+      <div class="offer-wrap">
+        <AddonOffer heading="Keep going with Five More" />
+      </div>
+    )
+  }
 
-  <section class="first-time">
-    <h2 class="serif">Before you start</h2>
-    <p>
-      You need a pen, a notebook, and about thirty minutes where no one needs you.
-      Read <a href="/method">The Method</a> once before Day 1. It’s short.
-    </p>
-  </section>
+  {
+    nothingDone && (
+      <>
+        <hr class="rule" />
+        <section class="first-time">
+          <h2 class="serif">Before you start</h2>
+          <p>
+            You need a pen, a notebook, and about thirty minutes where no one needs you.
+            Read <a href="/method">The Method</a> once before Day 1. It’s short.
+          </p>
+        </section>
+      </>
+    )
+  }
 </Library>
+
+<script>
+  // "One day at a time": if a day was finished today (in the member's own
+  // time zone), the Today card says so instead of urging them on.
+  function markDoneToday() {
+    const card = document.querySelector<HTMLElement>('[data-today]');
+    const seed = document.getElementById('sw-progress')?.textContent;
+    if (!card || !seed) return;
+    const now = new Date();
+    const doneToday = Object.values(JSON.parse(seed) as Record<string, string>).some((iso) => {
+      const d = new Date(iso);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    });
+    card.classList.toggle('is-done-today', doneToday);
+  }
+  document.addEventListener('astro:page-load', markDoneToday);
+</script>
 
 <style>
   .today__eyebrow {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3);
     margin-bottom: var(--space-4);
@@ -66,6 +150,10 @@ const today = {
     line-height: 1.6;
   }
 
+  .today__summary a {
+    color: var(--ink);
+  }
+
   .today__actions {
     display: flex;
     flex-wrap: wrap;
@@ -73,7 +161,48 @@ const today = {
     margin-top: var(--space-6);
   }
 
+  /* Default: today's work is still to do */
+  .today__when-done,
+  .today__summary--done,
+  .today__peek {
+    display: none;
+  }
+
+  /* A day was finished today: rest, don't push */
+  .is-done-today .today__when {
+    display: none;
+  }
+
+  .is-done-today .today__when-done {
+    display: inline;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .is-done-today .today__summary:not(.today__summary--done) {
+    display: none;
+  }
+
+  .is-done-today .today__summary--done {
+    display: block;
+  }
+
+  .is-done-today .today__go {
+    display: none;
+  }
+
+  .is-done-today .today__peek {
+    display: inline-flex;
+  }
+
   .progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+
+  .offer-wrap {
     margin-top: var(--space-8);
   }
 

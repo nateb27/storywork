@@ -9,6 +9,8 @@ import Base from './Base.astro';
 import '@/styles/prose.css';
 import Deck from '@/components/deck/Deck';
 import type { CollectionId } from '@/data/collections';
+import ProgressSeed from '@/components/ui/ProgressSeed.astro';
+import { lockedCollections } from '@/lib/access';
 
 export interface Section {
   id: string;
@@ -23,7 +25,7 @@ interface Props {
   locked?: CollectionId[];
 }
 
-const { title, back, sections, collection, locked = [] } = Astro.props;
+const { title, back, sections, collection, locked = lockedCollections(Astro.locals.products) } = Astro.props;
 ---
 
 <Base title={title}>
@@ -51,6 +53,7 @@ const { title, back, sections, collection, locked = [] } = Astro.props;
       <slot />
     </main>
   </div>
+  <ProgressSeed />
   <Deck client:load transition:persist="deck" active={collection} locked={locked} hidden />
 </Base>
 

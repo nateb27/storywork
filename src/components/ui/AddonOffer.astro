@@ -1,0 +1,99 @@
+---
+/**
+ * The Five More upsell, used on the library home after Day 10, on the
+ * locked add-on pages, and on /welcome. Never rendered for owners.
+ */
+interface Props {
+  heading?: string;
+  body?: string;
+  price?: string;
+  compact?: boolean;
+}
+
+const {
+  heading = 'Five More',
+  body = 'Five more passages and lessons for when ten days isn’t enough: longer sentences, harder rhythms, the same quiet half hour.',
+  price,
+  compact = false,
+} = Astro.props;
+---
+
+<aside class:list={['offer', { 'offer--compact': compact }]} aria-label="Five More add-on">
+  <div class="offer__card" aria-hidden="true">
+    <span class="serif">Five<br />More</span>
+    <svg viewBox="0 0 60 40" width="44" height="30">
+      <g stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+        <line x1="12" y1="6" x2="11" y2="34" /><line x1="21" y1="6" x2="20" y2="34" />
+        <line x1="30" y1="6" x2="29" y2="34" /><line x1="39" y1="6" x2="38" y2="34" />
+        <line x1="4" y1="30" x2="47" y2="10" />
+      </g>
+    </svg>
+  </div>
+  <div class="offer__text">
+    <h2 class="offer__heading serif">{heading}</h2>
+    <p class="offer__body">{body}</p>
+    <a class="button offer__cta" href="/checkout?product=addon">
+      Add Five More{price && <span class="offer__price">{price}</span>}
+    </a>
+  </div>
+</aside>
+
+<style>
+  .offer {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-card);
+  }
+
+  .offer__card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+    width: 5.5rem;
+    height: 7rem;
+    padding: 0.6rem 0.65rem;
+    border-radius: 10px;
+    background: var(--card-more);
+    color: var(--card-ink-dark);
+    transform: rotate(-4deg);
+    box-shadow: 0 6px 16px -8px rgb(0 0 0 / 0.35);
+  }
+
+  .offer__card .serif {
+    font-size: 1rem;
+    line-height: 1.02;
+  }
+
+  .offer__heading {
+    font-size: 1.5rem;
+    line-height: 1.15;
+  }
+
+  .offer__body {
+    margin-top: var(--space-2);
+    color: var(--grey);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+  }
+
+  .offer__cta {
+    margin-top: var(--space-4);
+  }
+
+  .offer__price {
+    padding-left: var(--space-2);
+    margin-left: var(--space-1);
+    border-left: 1px solid color-mix(in srgb, var(--paper) 30%, transparent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 480px) {
+    .offer {
+      flex-direction: column;
+    }
+  }
+</style>

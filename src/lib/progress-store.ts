@@ -33,33 +33,72 @@ function write(next: Progress) {
   }
 }
 
+/** Progress the server embedded in the page, if any (see ProgressSeed.astro) */
+function readSeed(): Progress | null {
+  const el = document.getElementById('sw-progress');
+  if (!el?.textContent) return null;
+  try {
+    return JSON.parse(el.textContent) as Progress;
+  } catch {
+    return null;
+  }
+}
+
+/** Changes sent to the server but not yet confirmed: day → done? */
+const pending = new Map<number, { done: boolean; at: string }>();
+
+function withPending(base: Progress): Progress {
+  const next = { ...base };
+  for (const [day, change] of pending) {
+    if (change.done) next[day] ??= change.at;
+    else delete next[day];
+  }
+  return next;
+}
+
+function applySeed(): boolean {
+  const seed = readSeed();
+  if (!seed) return false;
+  // The server is the source of truth, except for changes still in flight
+  state = withPending(seed);
+  write(state);
+  return true;
+}
+
 function ensureLoaded() {
   if (loaded || typeof window === 'undefined') return;
-  state = read();
+  if (!applySeed()) state = read();
   loaded = true;
+  // View transitions swap the page without a reload; pick up its fresh copy
+  document.addEventListener('astro:after-swap', () => {
+    if (applySeed()) emit();
+  });
 }
 
 function emit() {
   listeners.forEach((l) => l());
 }
 
-/** Merge the server's copy in (server wins for days it knows about). */
-export function seedProgress(server: Progress) {
-  ensureLoaded();
-  state = { ...state, ...server };
-  write(state);
-  emit();
-}
-
 async function sync(day: number, done: boolean) {
+  const change = { done, at: new Date().toISOString() };
+  pending.set(day, change);
   try {
-    await fetch('/api/progress', {
+    const res = await fetch('/api/progress', {
       method: done ? 'POST' : 'DELETE',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ day }),
     });
+    if (res.ok) {
+      const body = (await res.json()) as { progress?: Progress };
+      if (pending.get(day) === change) pending.delete(day);
+      if (body.progress) {
+        state = withPending(body.progress);
+        write(state);
+        emit();
+      }
+    }
   } catch {
-    /* offline: localStorage keeps it; next seed reconciles */
+    /* offline: the change stays pending and shown locally until a later save succeeds */
   }
 }
 

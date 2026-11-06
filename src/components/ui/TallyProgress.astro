@@ -6,8 +6,10 @@
 interface Props {
   total: number;
   done: number;
+  /** Caption after the count, e.g. "of 10 days done" */
+  label?: string;
 }
-const { total, done } = Astro.props;
+const { total, done, label = `of ${total} days done` } = Astro.props;
 
 const MARK = { height: 26, gap: 8, groupGap: 16, stroke: 2, tilt: 1.5 };
 const groups = Math.ceil(total / 5);
@@ -47,7 +49,7 @@ for (let g = 0; g < groups; g++) {
       ))
     }
   </svg>
-  <figcaption>{done} of {total} days done</figcaption>
+  <figcaption>{done} {label}</figcaption>
 </figure>
 
 <style>

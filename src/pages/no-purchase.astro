@@ -1,0 +1,80 @@
+---
+import { PUBLIC_SUPPORT_EMAIL } from 'astro:env/client';
+import Base from '@/layouts/Base.astro';
+import Mark from '@/components/ui/Mark.astro';
+
+const email = Astro.locals.member?.email ?? '';
+if (Astro.locals.products.includes('challenge')) return Astro.redirect('/library', 302);
+---
+
+<Base title="No purchase found">
+  <main id="main" class="np">
+    <Mark size={36} />
+    <h1 class="serif">We couldn’t find a purchase for this email.</h1>
+    <p class="np__email">{email}</p>
+    <p class="np__copy">
+      If you bought the challenge with a different address, sign out and use that one. Receipts from
+      Stripe show the email you paid with.
+    </p>
+    <div class="np__actions">
+      <form method="post" action="/api/auth/signout">
+        <button type="submit" class="button">Use a different email</button>
+      </form>
+      <a class="button button--quiet" href="/checkout?product=challenge">Buy the challenge</a>
+    </div>
+    <p class="np__help">
+      Still stuck? Email <a href={`mailto:${PUBLIC_SUPPORT_EMAIL}`}>{PUBLIC_SUPPORT_EMAIL}</a> and we’ll sort it out.
+    </p>
+  </main>
+</Base>
+
+<style>
+  .np {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 30rem;
+    min-height: 100svh;
+    margin: 0 auto;
+    padding: max(14vh, 4rem) var(--gutter) var(--space-7);
+    text-align: center;
+  }
+
+  h1 {
+    margin-top: var(--space-6);
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  .np__email {
+    margin-top: var(--space-3);
+    color: var(--ink-soft);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .np__copy {
+    margin-top: var(--space-4);
+    color: var(--grey);
+    line-height: 1.6;
+  }
+
+  .np__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+  }
+
+  .np__help {
+    margin-top: var(--space-7);
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+
+  .np__help a {
+    color: var(--ink);
+  }
+</style>

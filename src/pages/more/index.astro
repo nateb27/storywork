@@ -2,21 +2,42 @@
 import Library from '@/layouts/Library.astro';
 import PageTitle from '@/components/ui/PageTitle.astro';
 import ItemList, { type ListItem } from '@/components/ui/ItemList.astro';
+import AddonOffer from '@/components/ui/AddonOffer.astro';
 import { collectionById } from '@/data/collections';
 import { getDays, dayHref, CORE_DAYS } from '@/lib/content';
+import { hasAddon, nextDay } from '@/lib/access';
+import { memberProgress } from '@/lib/member';
 
 const c = collectionById('more');
+const owns = hasAddon(Astro.locals.products);
 const days = (await getDays()).filter((d) => d.data.day > CORE_DAYS);
+const progress = await memberProgress(Astro.locals);
+const todayDay = nextDay(progress, Astro.locals.products);
 
 const items: ListItem[] = days.map((d) => ({
   href: dayHref(d.data.day),
   label: `Day ${d.data.day}`,
   title: d.data.title,
   description: d.data.summary,
+  pill: owns ? (d.data.day === todayDay ? 'today' : null) : 'locked',
+  done: owns && Boolean(progress[d.data.day]),
 }));
 ---
 
 <Library title={c.name} active="more">
   <PageTitle title={c.name} intro={c.intro} />
+  {
+    !owns && (
+      <div class="offer-wrap">
+        <AddonOffer heading="Unlock Five More" />
+      </div>
+    )
+  }
   <ItemList items={items} />
 </Library>
+
+<style>
+  .offer-wrap {
+    margin-bottom: var(--space-7);
+  }
+</style>

@@ -1,0 +1,11 @@
+---
+/**
+ * Hands the server's copy of the member's progress to the client store
+ * (src/lib/progress-store.ts), which treats it as the source of truth.
+ */
+import { memberProgress } from '@/lib/member';
+
+const progress = Astro.locals.member ? await memberProgress(Astro.locals) : null;
+---
+
+{progress && <script type="application/json" id="sw-progress" set:html={JSON.stringify(progress)} />}

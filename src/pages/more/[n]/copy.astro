@@ -1,10 +1,12 @@
 ---
 import CopyPage from '@/components/day/CopyPage.astro';
 import { getDay, parseDayParam } from '@/lib/content';
+import { hasAddon } from '@/lib/access';
 
 const n = parseDayParam(Astro.params.n, 'more');
 const day = n ? await getDay(n) : undefined;
 if (!day) return Astro.rewrite('/404');
+if (!hasAddon(Astro.locals.products)) return Astro.redirect(`/more/${n}`, 302);
 ---
 
 <CopyPage day={day} />

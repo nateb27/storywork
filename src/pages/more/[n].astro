@@ -1,10 +1,13 @@
 ---
 import DayPage from '@/components/day/DayPage.astro';
+import LockedDay from '@/components/day/LockedDay.astro';
 import { getDay, parseDayParam } from '@/lib/content';
+import { hasAddon } from '@/lib/access';
 
 const n = parseDayParam(Astro.params.n, 'more');
 const day = n ? await getDay(n) : undefined;
 if (!day) return Astro.rewrite('/404');
+const owns = hasAddon(Astro.locals.products);
 ---
 
-<DayPage day={day} />
+{owns ? <DayPage day={day} /> : <LockedDay day={day} />}

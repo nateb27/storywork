@@ -4,10 +4,13 @@ import PageTitle from '@/components/ui/PageTitle.astro';
 import ItemList, { type ListItem } from '@/components/ui/ItemList.astro';
 import { collectionById } from '@/data/collections';
 import { getDays, dayHref, CORE_DAYS } from '@/lib/content';
+import { nextDay } from '@/lib/access';
+import { memberProgress } from '@/lib/member';
 
 const c = collectionById('ten');
 const days = (await getDays()).filter((d) => d.data.day <= CORE_DAYS);
-const todayDay = 1; // replaced by the member's next unfinished day in milestone 3
+const progress = await memberProgress(Astro.locals);
+const todayDay = nextDay(progress, Astro.locals.products);
 
 const items: ListItem[] = days.map((d) => ({
   href: dayHref(d.data.day),
@@ -15,6 +18,7 @@ const items: ListItem[] = days.map((d) => ({
   title: d.data.title,
   description: d.data.summary,
   pill: d.data.day === todayDay ? 'today' : null,
+  done: Boolean(progress[d.data.day]),
 }));
 ---
 
