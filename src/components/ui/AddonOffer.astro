@@ -1,21 +1,25 @@
 ---
 /**
  * The Five More upsell, used on the library home after Day 10, on the
- * locked add-on pages, and on /welcome. Never rendered for owners.
+ * locked add-on pages, after Day 10, and on /welcome. Callers only render
+ * it for members who don't own Five More.
  */
+import { formatPrice, pricesAt } from '@/config/pricing';
+
 interface Props {
   heading?: string;
   body?: string;
-  price?: string;
+  href?: string;
   compact?: boolean;
 }
 
 const {
   heading = 'Five More',
   body = 'Five more passages and lessons for when ten days isn’t enough: longer sentences, harder rhythms, the same quiet half hour.',
-  price,
+  href = '/checkout?product=addon',
   compact = false,
 } = Astro.props;
+const price = formatPrice(pricesAt().addon);
 ---
 
 <aside class:list={['offer', { 'offer--compact': compact }]} aria-label="Five More add-on">
@@ -32,8 +36,8 @@ const {
   <div class="offer__text">
     <h2 class="offer__heading serif">{heading}</h2>
     <p class="offer__body">{body}</p>
-    <a class="button offer__cta" href="/checkout?product=addon">
-      Add Five More{price && <span class="offer__price">{price}</span>}
+    <a class="button offer__cta" href={href}>
+      Add Five More<span class="offer__price">{price}</span>
     </a>
   </div>
 </aside>

@@ -8,6 +8,8 @@ const PUBLIC: RegExp[] = [
   /^\/checkout\/?$/,
   /^\/welcome\/?$/,
   /^\/api\/stripe\//,
+  /^\/api\/price\/?$/,
+  /^\/api\/dev\//,
   /^\/404\/?$/,
   /^\/(_astro|_image)\//,
   /^\/(favicon\.svg|og\.png|robots\.txt)$/,

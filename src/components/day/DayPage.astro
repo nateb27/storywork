@@ -7,6 +7,9 @@ import { render } from 'astro:content';
 import Lesson from '@/layouts/Lesson.astro';
 import Complete from './Complete';
 import SameDayNote from './SameDayNote';
+import RevealWhenDone from './RevealWhenDone';
+import AddonOffer from '@/components/ui/AddonOffer.astro';
+import { hasAddon } from '@/lib/access';
 import { CORE_DAYS, TOTAL_DAYS, dayCollection, dayHref, getDays, sectionsFrom, type Day } from '@/lib/content';
 import { paragraphs, paragraphHtml } from '@/lib/format';
 import type { CollectionId } from '@/data/collections';
@@ -40,6 +43,7 @@ const next =
       : { href: dayHref(n + 1), dir: `Day ${n + 1}`, label: titleOf(n + 1) }
     : null;
 const lastDayOfSet = n === CORE_DAYS || n === TOTAL_DAYS;
+const offerAddon = n === CORE_DAYS && !hasAddon(Astro.locals.products);
 ---
 
 <Lesson
@@ -112,6 +116,16 @@ const lastDayOfSet = n === CORE_DAYS || n === TOTAL_DAYS;
       nextLabel="Back to the library"
     />
   </div>
+
+  {
+    offerAddon && (
+      <RevealWhenDone client:load day={n}>
+        <div class="day-offer">
+          <AddonOffer heading="Keep going with Five More" />
+        </div>
+      </RevealWhenDone>
+    )
+  }
 
   <nav class="day-pager" aria-label="Days">
     {
@@ -257,6 +271,10 @@ const lastDayOfSet = n === CORE_DAYS || n === TOTAL_DAYS;
     margin-top: var(--space-8);
     padding-top: var(--space-7);
     border-top: 1px solid var(--hairline);
+  }
+
+  .day-offer {
+    margin-top: var(--space-7);
   }
 
   .day-pager {

@@ -1,0 +1,161 @@
+---
+/**
+ * GET /checkout?product=challenge|addon
+ * Sends the buyer to Stripe Checkout, or (development without Stripe
+ * keys) shows a stand-in checkout form.
+ */
+import { PUBLIC_SALES_URL } from 'astro:env/client';
+import Base from '@/layouts/Base.astro';
+import Mark from '@/components/ui/Mark.astro';
+import { createCheckout, getStripe, stripeConfigured } from '@/lib/stripe';
+import { formatPrice, pricesAt } from '@/config/pricing';
+import type { Product } from '@/lib/backend';
+
+const params = Astro.url.searchParams;
+const product: Product = params.get('product') === 'addon' ? 'addon' : 'challenge';
+const { member, backend } = Astro.locals;
+const origin = Astro.url.origin;
+
+// What the buyer already owns, and which email the purchase belongs to
+let email: string | undefined = member?.email;
+const fromSession = params.get('session_id');
+if (!email && fromSession && stripeConfigured) {
+  try {
+    const s = await getStripe().checkout.sessions.retrieve(fromSession);
+    if (s.payment_status === 'paid') email = s.customer_details?.email ?? undefined;
+  } catch {
+    /* unknown session: fall through to sign-in */
+  }
+}
+const owned = email ? await backend.getProducts(email) : [];
+
+if (product === 'challenge' && owned.includes('challenge')) return Astro.redirect('/library', 302);
+if (product === 'addon') {
+  if (!email) return Astro.redirect(`/login?next=${encodeURIComponent('/checkout?product=addon')}`, 302);
+  if (owned.includes('addon')) return Astro.redirect('/more', 302);
+}
+
+const cancelUrl =
+  product === 'addon' ? `${origin}/more` : PUBLIC_SALES_URL || `${origin}/login`;
+const offerAddon = product === 'challenge' && !owned.includes('addon');
+
+let error: string | null = null;
+if (stripeConfigured) {
+  try {
+    const url = await createCheckout({ product, email, offerAddon, origin, cancelUrl });
+    return Astro.redirect(url, 303);
+  } catch (e) {
+    console.error('[checkout]', e);
+    error = 'Checkout couldn’t start. Please try again in a moment.';
+  }
+} else if (!import.meta.env.DEV) {
+  error = 'Checkout isn’t available right now. Please try again shortly.';
+}
+
+const prices = pricesAt();
+const amount = product === 'challenge' ? prices.challenge : prices.addon;
+Astro.response.status = error ? 503 : 200;
+---
+
+<Base title="Checkout">
+  <main id="main" class="co">
+    <Mark size={32} />
+    {
+      error ? (
+        <>
+          <h1 class="serif">{error}</h1>
+          <a class="button" href={Astro.url.pathname + Astro.url.search}>Try again</a>
+        </>
+      ) : (
+        <form class="co__form" method="post" action="/api/dev/checkout">
+          <p class="co__dev">Development checkout. No Stripe keys are set, so nothing is charged.</p>
+          <h1 class="serif">{product === 'challenge' ? 'The Ten Days' : 'Five More'}</h1>
+          <p class="co__price">
+            {formatPrice(amount)}
+            {product === 'challenge' && prices.sale && <s>{formatPrice(prices.regular)}</s>}
+          </p>
+          <input type="hidden" name="product" value={product} />
+          <label for="co-email">Email</label>
+          <input id="co-email" name="email" type="email" required value={email ?? ''} readonly={Boolean(email)} />
+          {offerAddon && (
+            <label class="co__check">
+              <input type="checkbox" name="addon" value="1" /> Add Five More for {formatPrice(prices.addon)}
+            </label>
+          )}
+          <button class="button" type="submit">Pay {formatPrice(amount)}</button>
+        </form>
+      )
+    }
+  </main>
+</Base>
+
+<style>
+  .co {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-5);
+    max-width: 24rem;
+    min-height: 100svh;
+    margin: 0 auto;
+    padding: max(12vh, 4rem) var(--gutter);
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+
+  .co__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    width: 100%;
+    text-align: left;
+  }
+
+  .co__dev {
+    padding: var(--space-2) var(--space-3);
+    border: 1px dashed var(--grey-faint);
+    border-radius: var(--radius-sm);
+    color: var(--grey);
+    font-size: var(--text-xs);
+  }
+
+  .co__price {
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+    color: var(--ink);
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  .co__price s {
+    color: var(--grey-faint);
+    font-size: var(--text-base);
+  }
+
+  label {
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+
+  input[type='email'] {
+    height: 2.75rem;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+  }
+
+  .co__check {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    color: var(--ink-soft);
+  }
+</style>

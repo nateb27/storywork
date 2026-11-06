@@ -1,0 +1,194 @@
+---
+/**
+ * After Stripe Checkout. Records the purchase here as well as in the
+ * webhook (both are idempotent), so a slow webhook never leaves a buyer
+ * unable to sign in. Then: how to sign in, what to have ready, and the
+ * Five More offer if they didn't take it.
+ */
+import { PUBLIC_OTP_LENGTH, PUBLIC_SUPPORT_EMAIL } from 'astro:env/client';
+import Base from '@/layouts/Base.astro';
+import Mark from '@/components/ui/Mark.astro';
+import AddonOffer from '@/components/ui/AddonOffer.astro';
+import { fulfil, stripeConfigured } from '@/lib/stripe';
+import { isEmail } from '@/lib/access';
+import type { Product } from '@/lib/backend';
+
+const params = Astro.url.searchParams;
+const sessionId = params.get('session_id');
+let paid = false;
+let email: string | null = null;
+
+if (sessionId && stripeConfigured) {
+  try {
+    const result = await fulfil(sessionId, Astro.locals.backend);
+    paid = result.paid;
+    email = result.email;
+  } catch (e) {
+    console.error('[welcome] fulfilment check failed', e);
+  }
+} else if (import.meta.env.DEV && !stripeConfigured && isEmail(params.get('dev_email'))) {
+  paid = true;
+  email = params.get('dev_email');
+}
+
+const owned: Product[] = email ? await Astro.locals.backend.getProducts(email) : [];
+const ownsAddon = owned.includes('addon');
+const signInHref = email ? `/login?email=${encodeURIComponent(email)}` : '/login';
+const addonHref = sessionId
+  ? `/checkout?product=addon&session_id=${encodeURIComponent(sessionId)}`
+  : '/checkout?product=addon';
+---
+
+<Base title="Welcome">
+  <main id="main" class="welcome">
+    <Mark size={40} />
+    {
+      paid ? (
+        <>
+          <h1 class="serif">You’re in.</h1>
+          <p class="welcome__lede">
+            Thank you. Your receipt is on its way from Stripe.
+            {ownsAddon && ' Five More is included.'}
+          </p>
+
+          <ol class="steps" role="list">
+            <li>
+              <span class="steps__n serif">1</span>
+              <div>
+                <h2>Sign in</h2>
+                <p>
+                  Use <strong>{email}</strong>. We’ll email you a {PUBLIC_OTP_LENGTH}‑digit code; there’s
+                  no password to remember.
+                </p>
+                <a class="button" href={signInHref}>Sign in</a>
+              </div>
+            </li>
+            <li>
+              <span class="steps__n serif">2</span>
+              <div>
+                <h2>Find a notebook and a pen</h2>
+                <p>One notebook for every day of the challenge, so the work piles up where you can see it.</p>
+              </div>
+            </li>
+            <li>
+              <span class="steps__n serif">3</span>
+              <div>
+                <h2>Start with The Method, then Day 1</h2>
+                <p>About thirty minutes a day. All ten days are open, but do one a day.</p>
+              </div>
+            </li>
+          </ol>
+
+          {!ownsAddon && (
+            <div class="welcome__offer">
+              <AddonOffer
+                heading="Want five more days?"
+                body="Add Five More now and it’ll be waiting when you finish Day 10. Same email, nothing else to do."
+                href={addonHref}
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <h1 class="serif">Your payment is still processing.</h1>
+          <p class="welcome__lede">
+            Some payment methods take a few minutes to confirm. Stripe will email your receipt when it’s
+            done, and then you can <a href="/login">sign in</a> with the email you paid with.
+          </p>
+          <p class="welcome__help">
+            Questions? <a href={`mailto:${PUBLIC_SUPPORT_EMAIL}`}>{PUBLIC_SUPPORT_EMAIL}</a>
+          </p>
+        </>
+      )
+    }
+  </main>
+</Base>
+
+<style>
+  .welcome {
+    max-width: 34rem;
+    min-height: 100svh;
+    margin: 0 auto;
+    padding: max(12vh, 4rem) var(--gutter) var(--space-9);
+  }
+
+  h1 {
+    margin-top: var(--space-6);
+    font-size: var(--text-h1);
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+  }
+
+  .welcome__lede {
+    margin-top: var(--space-4);
+    color: var(--grey);
+    font-size: var(--text-body);
+    line-height: 1.6;
+  }
+
+  .welcome__lede a,
+  .welcome__help a {
+    color: var(--ink);
+  }
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    margin: var(--space-8) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .steps li {
+    display: flex;
+    gap: var(--space-4);
+  }
+
+  .steps__n {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--paper-raised);
+    color: var(--ink);
+    font-size: 1.125rem;
+  }
+
+  .steps h2 {
+    color: var(--ink);
+    font-size: var(--text-base);
+    font-weight: 600;
+    line-height: 2rem;
+  }
+
+  .steps p {
+    margin-top: var(--space-1);
+    color: var(--grey);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+  }
+
+  .steps strong {
+    color: var(--ink-soft);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .steps .button {
+    margin-top: var(--space-4);
+  }
+
+  .welcome__offer {
+    margin-top: var(--space-8);
+  }
+
+  .welcome__help {
+    margin-top: var(--space-6);
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+</style>

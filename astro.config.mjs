@@ -22,7 +22,11 @@ export default defineConfig({
       // Stripe: checkout and the purchase webhook
       STRIPE_SECRET_KEY: secret(),
       STRIPE_WEBHOOK_SECRET: secret(),
+      // Turn on once Stripe Tax is set up in the Stripe dashboard
+      STRIPE_AUTOMATIC_TAX: envField.boolean({ context: 'server', access: 'public', default: false }),
       // Public settings
+      // The owner's sales page; "Join the challenge" links and cancelled checkouts go here
+      PUBLIC_SALES_URL: envField.string({ context: 'client', access: 'public', optional: true }),
       PUBLIC_SUPPORT_EMAIL: envField.string({
         context: 'client',
         access: 'public',

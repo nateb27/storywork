@@ -1,12 +1,14 @@
 ---
-import { PUBLIC_OTP_LENGTH, PUBLIC_SUPPORT_EMAIL } from 'astro:env/client';
+import { PUBLIC_OTP_LENGTH, PUBLIC_SALES_URL, PUBLIC_SUPPORT_EMAIL } from 'astro:env/client';
 import Base from '@/layouts/Base.astro';
 import Mark from '@/components/ui/Mark.astro';
 import LoginForm from '@/components/auth/LoginForm';
-import { safeNext } from '@/lib/access';
+import { isEmail, safeNext } from '@/lib/access';
 
 const next = safeNext(Astro.url.searchParams.get('next'));
 const signedOut = Astro.url.searchParams.has('signedout');
+const emailParam = Astro.url.searchParams.get('email') ?? '';
+const initialEmail = isEmail(emailParam) ? emailParam : '';
 
 // Already signed in: skip the form
 if (Astro.locals.member && !signedOut) return Astro.redirect(next, 302);
@@ -21,8 +23,9 @@ if (Astro.locals.member && !signedOut) return Astro.redirect(next, 302);
     <LoginForm
       client:load
       next={next}
+      initialEmail={initialEmail}
       codeLength={PUBLIC_OTP_LENGTH}
-      joinHref="/checkout"
+      joinHref={PUBLIC_SALES_URL || '/checkout'}
       supportEmail={PUBLIC_SUPPORT_EMAIL}
       signedOut={signedOut}
     />

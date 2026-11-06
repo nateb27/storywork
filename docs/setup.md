@@ -46,7 +46,32 @@ The site never sees the Resend key; only Supabase uses it.
 
 ## 3. Stripe
 
-Added in milestone 4; see the Stripe section below once it exists.
+You don't create products or prices in Stripe. The site creates them the first time someone checks out at a given price, named "Storywork: The Ten Days" and "Storywork: Five More", and reuses them after that. To change a price, edit `src/config/pricing.ts`.
+
+1. **Keys.** *Developers → API keys*. Copy the **Secret key** into Netlify as `STRIPE_SECRET_KEY`. Use the test-mode key (`sk_test_…`) until you've done a test purchase end to end, then switch to the live key (`sk_live_…`).
+2. **Webhook.** *Developers → Webhooks → Add endpoint*:
+   - URL: `https://your-domain/api/stripe/webhook`
+   - Events: `checkout.session.completed` and `checkout.session.async_payment_succeeded`
+   - Copy the endpoint's **Signing secret** (`whsec_…`) into Netlify as `STRIPE_WEBHOOK_SECRET`.
+   Test mode and live mode have separate webhooks and separate secrets; set up both.
+3. **Receipts.** *Settings → Customer emails*: turn on "Successful payments" so buyers get a receipt. The receipt shows the email they paid with, which is the email they sign in with.
+4. **Branding.** *Settings → Branding*: add the Storywork icon and colours so Checkout matches the site.
+5. **Sales tax / VAT (optional).** Stripe charges tax only if you set up *Stripe Tax* (*Settings → Tax*: add your business address and where you're registered). Once that's done, set `STRIPE_AUTOMATIC_TAX=true` in Netlify. Leave it unset until then; turning it on without Stripe Tax set up makes checkout fail.
+6. **Discount codes (optional).** *Product catalogue → Coupons*: create a coupon, then a promotion code for it. Checkout already shows an "Add promotion code" field.
+
+### Where buyers come from
+
+- Your sales page's Buy button should link to `https://your-domain/checkout`. That page sends them straight to Stripe at the current price, with Five More offered as a tick-box.
+- Set `PUBLIC_SALES_URL` in Netlify to your sales page's address. "Join the challenge" on the sign-in page and cancelled checkouts go there.
+- `https://your-domain/api/price` returns the current prices as JSON if you want the sales page to show them automatically.
+
+### Test purchase checklist (test mode)
+
+1. Open `/checkout`, pay with card `4242 4242 4242 4242`, any future date, any CVC. Tick Five More.
+2. You land on `/welcome`, which says "You're in" and "Five More is included".
+3. *Developers → Webhooks → your endpoint* shows a `200` for the event.
+4. Sign in with the email you used; Days 1–10 and Five More are open.
+5. Buy again with a new email without ticking Five More; after Day 10 the Five More offer appears, and buying it from there unlocks Days 11–15.
 
 ## 4. Netlify
 

@@ -30,6 +30,8 @@ const RESEND_SECONDS = 60;
 
 interface Props {
   next: string;
+  /** Prefill from /welcome after a purchase */
+  initialEmail?: string;
   codeLength: number;
   joinHref: string;
   supportEmail: string;
@@ -38,9 +40,9 @@ interface Props {
 
 type Step = 'email' | 'code' | 'success';
 
-export default function LoginForm({ next, codeLength, joinHref, supportEmail, signedOut }: Props) {
+export default function LoginForm({ next, initialEmail = '', codeLength, joinHref, supportEmail, signedOut }: Props) {
   const [step, setStep] = useState<Step>('email');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail);
   const [digits, setDigits] = useState<string[]>(() => Array(codeLength).fill(''));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -50,7 +52,11 @@ export default function LoginForm({ next, codeLength, joinHref, supportEmail, si
   const shake = useAnimationControls();
   const emailInput = useRef<HTMLInputElement>(null);
 
+  // Until hydrated, a click would submit the form natively and reload the
+  // page; keep the button disabled until the form is live
+  const [ready, setReady] = useState(false);
   useEffect(() => {
+    setReady(true);
     emailInput.current?.focus();
   }, []);
 
@@ -208,10 +214,10 @@ export default function LoginForm({ next, codeLength, joinHref, supportEmail, si
                 {error}
               </p>
             )}
-            <button className="button login-submit" type="submit" disabled={busy || !email}>
+            <button className="button login-submit" type="submit" disabled={!ready || busy || !email}>
               {busy ? 'Sending a code…' : 'Continue'}
             </button>
-            <p className="login-hint">We’ll email you a {codeLength}-digit code. No password.</p>
+            <p className="login-hint">We’ll email you a {codeLength}‑digit code. No password.</p>
           </motion.form>
         ) : (
           <motion.div
@@ -223,7 +229,7 @@ export default function LoginForm({ next, codeLength, joinHref, supportEmail, si
           >
             <h2 className="login-code-title">Check your email</h2>
             <p className="login-code-copy">
-              We sent a {codeLength}-digit code to <strong>{email}</strong>. It may take a minute,
+              We sent a {codeLength}‑digit code to <strong>{email}</strong>. It may take a minute,
               and sometimes lands in spam.
             </p>
             {devCode && (
