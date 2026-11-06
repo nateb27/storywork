@@ -1,0 +1,20 @@
+---
+import Library from '@/layouts/Library.astro';
+import PageTitle from '@/components/ui/PageTitle.astro';
+import ItemList, { type ListItem } from '@/components/ui/ItemList.astro';
+import { collectionById } from '@/data/collections';
+import { getMethod } from '@/lib/content';
+
+const c = collectionById('method');
+const chapters = await getMethod();
+const items: ListItem[] = chapters.map((ch) => ({
+  href: `/method/${ch.id}`,
+  title: ch.data.title,
+  description: ch.data.summary,
+}));
+---
+
+<Library title={c.name} active="method">
+  <PageTitle title={c.name} intro={c.intro} />
+  <ItemList items={items} />
+</Library>

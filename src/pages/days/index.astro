@@ -3,14 +3,18 @@ import Library from '@/layouts/Library.astro';
 import PageTitle from '@/components/ui/PageTitle.astro';
 import ItemList, { type ListItem } from '@/components/ui/ItemList.astro';
 import { collectionById } from '@/data/collections';
+import { getDays, dayHref, CORE_DAYS } from '@/lib/content';
 
 const c = collectionById('ten');
-// Milestone 1 placeholder list
-const items: ListItem[] = Array.from({ length: 10 }, (_, i) => ({
-  label: `Day ${i + 1}`,
-  title: 'Lesson title to come',
-  description: 'One line about the technique this day teaches.',
-  pill: i === 0 ? 'today' : null,
+const days = (await getDays()).filter((d) => d.data.day <= CORE_DAYS);
+const todayDay = 1; // replaced by the member's next unfinished day in milestone 3
+
+const items: ListItem[] = days.map((d) => ({
+  href: dayHref(d.data.day),
+  label: `Day ${d.data.day}`,
+  title: d.data.title,
+  description: d.data.summary,
+  pill: d.data.day === todayDay ? 'today' : null,
 }));
 ---
 

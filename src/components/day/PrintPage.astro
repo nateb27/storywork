@@ -1,0 +1,158 @@
+---
+/**
+ * The passage alone, set for paper. Opened in a new tab from the day
+ * page; ?auto=1 opens the print dialog once fonts have loaded.
+ */
+import Base from '@/layouts/Base.astro';
+import { dayHref, type Day } from '@/lib/content';
+import { paragraphs, paragraphHtml, plain } from '@/lib/format';
+
+interface Props {
+  day: Day;
+}
+const { day } = Astro.props;
+const d = day.data;
+// Long passages print a size smaller so they still fit on one page
+const words = plain(d.passage).split(/\s+/).filter(Boolean).length;
+const long = words > 220;
+---
+
+<Base title={`Print · Day ${d.day}`}>
+  <main id="main" class="sheet">
+    <div class="sheet__screen-only">
+      <a href={dayHref(d.day)}>Back to Day {d.day}</a>
+      <button type="button" class="button" data-print>Print</button>
+    </div>
+    <header class="sheet__head">
+      <p>Storywork · Day {d.day}</p>
+      <h1 class="serif">{d.title}</h1>
+    </header>
+    <blockquote class:list={['sheet__passage serif', { 'sheet__passage--long': long }]}>
+      {paragraphs(d.passage).map((p) => <p set:html={paragraphHtml(p)} />)}
+    </blockquote>
+    <p class="sheet__source">
+      {d.source.author}, <cite>{d.source.work}</cite> ({d.source.year}){d.source.chapter && `, ${d.source.chapter}`}
+      {d.source.translator && `. Translated by ${d.source.translator}`}.
+    </p>
+    <p class="sheet__reflect"><span>Reflect</span> {d.reflection}</p>
+  </main>
+</Base>
+
+<script>
+  function setup() {
+    document.querySelector<HTMLButtonElement>('[data-print]')?.addEventListener('click', () => window.print());
+    if (new URLSearchParams(location.search).get('auto') === '1') {
+      document.fonts.ready.then(() => setTimeout(() => window.print(), 150));
+    }
+  }
+  document.addEventListener('astro:page-load', setup);
+</script>
+
+<style>
+  .sheet {
+    max-width: 36rem;
+    margin: 0 auto;
+    padding: var(--space-7) var(--gutter) var(--space-9);
+  }
+
+  .sheet__screen-only {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-8);
+    font-size: var(--text-sm);
+  }
+
+  .sheet__screen-only a {
+    color: var(--grey);
+  }
+
+  .sheet__head p {
+    color: var(--grey);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .sheet__head h1 {
+    margin-top: var(--space-2);
+    font-size: 1.75rem;
+    line-height: 1.15;
+  }
+
+  .sheet__passage {
+    margin: var(--space-6) 0 0;
+    font-size: 1.25rem;
+    line-height: 1.75;
+  }
+
+  .sheet__passage p + p {
+    text-indent: 1.5em;
+  }
+
+  .sheet__source {
+    margin-top: var(--space-5);
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+
+  .sheet__reflect {
+    margin-top: var(--space-7);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--hairline);
+    color: var(--ink-soft);
+    font-size: var(--text-sm);
+  }
+
+  .sheet__reflect span {
+    margin-right: 0.4em;
+    font-weight: 600;
+  }
+
+  @page {
+    margin: 22mm 20mm;
+  }
+
+  @media print {
+    :root {
+      --paper: #fff;
+      --ink: #000;
+      --ink-soft: #222;
+      --grey: #555;
+      --hairline: #ccc;
+    }
+
+    body {
+      background: #fff;
+    }
+
+    .sheet {
+      max-width: none;
+      padding: 0;
+    }
+
+    .sheet__screen-only,
+    .skip-link {
+      display: none !important;
+    }
+
+    .sheet__head h1 {
+      font-size: 18pt;
+    }
+
+    .sheet__passage {
+      font-size: 13pt;
+      line-height: 1.8;
+    }
+
+    .sheet__passage--long {
+      font-size: 11.5pt;
+      line-height: 1.65;
+    }
+
+    .sheet__source,
+    .sheet__reflect {
+      font-size: 9.5pt;
+    }
+  }
+</style>

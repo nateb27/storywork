@@ -142,7 +142,11 @@ export default function Deck({
         className={`deck deck--${variant}`}
         style={{ height: containerHeight }}
         initial={false}
-        animate={{ y: hidden ? HIDE.offset : 0 }}
+        animate={
+          hidden
+            ? { y: HIDE.offset, transitionEnd: { visibility: 'hidden' } }
+            : { y: 0, visibility: 'visible' }
+        }
         transition={HIDE.spring}
         inert={hidden || undefined}
       >

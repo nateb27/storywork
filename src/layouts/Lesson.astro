@@ -1,0 +1,215 @@
+---
+/**
+ * Layout for reading: a day or a Method chapter. Back link and section
+ * list on the left (a sticky row of pills on phones), one reading
+ * column, and the deck slid out of view so nothing competes with the
+ * text. The deck persists, so going back raises it again.
+ */
+import Base from './Base.astro';
+import '@/styles/prose.css';
+import Deck from '@/components/deck/Deck';
+import type { CollectionId } from '@/data/collections';
+
+export interface Section {
+  id: string;
+  label: string;
+}
+
+interface Props {
+  title: string;
+  back: { href: string; label: string };
+  sections: Section[];
+  collection: CollectionId;
+  locked?: CollectionId[];
+}
+
+const { title, back, sections, collection, locked = [] } = Astro.props;
+---
+
+<Base title={title}>
+  <div class="lesson">
+    <aside class="lesson-nav">
+      <a class="lesson-nav__back" href={back.href}>
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path d="M10 3.5L5.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        {back.label}
+      </a>
+      {
+        sections.length > 0 && (
+          <nav class="lesson-nav__sections" aria-label="On this page">
+            {sections.map((s) => (
+              <a href={`#${s.id}`} data-section={s.id}>
+                {s.label}
+              </a>
+            ))}
+          </nav>
+        )
+      }
+    </aside>
+    <main id="main" class="lesson-main">
+      <slot />
+    </main>
+  </div>
+  <Deck client:load transition:persist="deck" active={collection} locked={locked} hidden />
+</Base>
+
+<script>
+  // Highlight the section currently being read.
+  function track() {
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-section]')];
+    if (!links.length) return;
+    const targets = links
+      .map((a) => document.getElementById(a.dataset.section ?? ''))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    const setActive = (id: string) => {
+      links.forEach((a) => a.classList.toggle('is-active', a.dataset.section === id));
+      const active = links.find((a) => a.dataset.section === id);
+      // Keep the active pill visible in the phone's horizontal row
+      active?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActive(visible[0].target.id);
+      },
+      { rootMargin: '-20% 0px -65% 0px' },
+    );
+    targets.forEach((t) => observer.observe(t));
+    document.addEventListener('astro:before-swap', () => observer.disconnect(), { once: true });
+  }
+  document.addEventListener('astro:page-load', track);
+</script>
+
+<style>
+  .lesson {
+    display: grid;
+    grid-template-columns: minmax(var(--gutter), 1fr) minmax(0, var(--measure)) minmax(var(--gutter), 1fr);
+    min-height: 100svh;
+  }
+
+  .lesson-nav {
+    grid-column: 1;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-7);
+    padding: var(--space-5) var(--space-5);
+    max-height: 100svh;
+    overflow-y: auto;
+  }
+
+  .lesson-nav__back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--grey);
+    font-size: var(--text-sm);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 160ms ease;
+  }
+
+  .lesson-nav__back:hover {
+    color: var(--ink);
+  }
+
+  .lesson-nav__back svg {
+    transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .lesson-nav__back:hover svg {
+    transform: translateX(-2px);
+  }
+
+  .lesson-nav__sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .lesson-nav__sections a {
+    color: var(--grey-faint);
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    text-decoration: none;
+    transition: color 160ms ease;
+  }
+
+  .lesson-nav__sections a:hover,
+  .lesson-nav__sections a.is-active {
+    color: var(--ink);
+  }
+
+  .lesson-main {
+    grid-column: 2;
+    padding: var(--space-8) 0 var(--space-9);
+    min-width: 0;
+  }
+
+  /* Narrower screens: the sidebar becomes a sticky bar above the column */
+  @media (max-width: 1080px) {
+    .lesson {
+      display: block;
+    }
+
+    .lesson-nav {
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      flex-direction: row;
+      align-items: center;
+      gap: var(--space-4);
+      max-height: none;
+      padding: var(--space-3) var(--gutter);
+      background: color-mix(in srgb, var(--paper) 92%, transparent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--hairline);
+      overflow: hidden;
+    }
+
+    .lesson-nav__sections {
+      flex-direction: row;
+      gap: var(--space-1);
+      overflow-x: auto;
+      scrollbar-width: none;
+      mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 24px), transparent);
+      padding: 0 var(--space-3);
+    }
+
+    .lesson-nav__sections::-webkit-scrollbar {
+      display: none;
+    }
+
+    .lesson-nav__sections a {
+      flex-shrink: 0;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      font-size: var(--text-xs);
+      white-space: nowrap;
+    }
+
+    .lesson-nav__sections a.is-active {
+      background: var(--paper-raised);
+    }
+
+    .lesson-main {
+      max-width: calc(var(--measure) + 2 * var(--gutter));
+      margin: 0 auto;
+      padding: var(--space-7) var(--gutter) var(--space-9);
+    }
+  }
+
+  @media print {
+    .lesson-nav {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,169 @@
+.copy {
+  min-height: 100svh;
+  background: var(--paper);
+}
+
+.copy--idle {
+  cursor: none;
+}
+
+.copy__bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.copy__bar--top {
+  top: 0;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, var(--paper) 60%, color-mix(in srgb, var(--paper) 0%, transparent));
+}
+
+.copy__bar--bottom {
+  bottom: 0;
+  justify-content: center;
+  padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--paper) 60%, color-mix(in srgb, var(--paper) 0%, transparent));
+}
+
+.copy__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  color: var(--grey);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.copy__back:hover {
+  color: var(--ink);
+}
+
+.copy__title {
+  overflow: hidden;
+  color: var(--grey-faint);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy__awake {
+  color: var(--grey-faint);
+}
+
+.copy__tools {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
+}
+
+.copy__tools button,
+.copy__bar--bottom button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--grey);
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.copy__tools button:hover:not(:disabled),
+.copy__bar--bottom button:hover:not(:disabled) {
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+.copy__tools button:disabled,
+.copy__bar--bottom button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.copy__tools button.is-on {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.copy__a {
+  font-family: var(--serif);
+  line-height: 1;
+}
+
+.copy__a--small {
+  font-size: 0.875rem;
+}
+
+.copy__a--large {
+  font-size: 1.25rem;
+}
+
+.copy__page {
+  display: flex;
+  justify-content: center;
+  padding: max(16vh, 5rem) var(--gutter) max(22vh, 7rem);
+}
+
+.copy__passage {
+  width: 100%;
+  /* ~60 characters a line: short enough that your eye finds its place
+     again after every glance down at the notebook */
+  max-width: 30em;
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.copy__text {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1em;
+  line-height: 1.75;
+  hanging-punctuation: first;
+}
+
+.copy__text p + p {
+  text-indent: 1.5em;
+}
+
+.copy__sentence {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.copy__source {
+  margin-top: 1.5em;
+  color: var(--grey);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+}
+
+.copy__source cite {
+  font-style: italic;
+}
+
+.copy__count {
+  min-width: 5.5rem;
+  color: var(--grey);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .copy__title {
+    display: none;
+  }
+
+  .copy__passage {
+    max-width: none;
+  }
+}

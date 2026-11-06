@@ -1,0 +1,397 @@
+---
+/**
+ * A single day: lesson, passage, reflection, completion.
+ * Shared by /days/[n] (Days 1–10) and /more/[n] (Days 11–15).
+ */
+import { render } from 'astro:content';
+import Lesson from '@/layouts/Lesson.astro';
+import Complete from './Complete';
+import SameDayNote from './SameDayNote';
+import { CORE_DAYS, TOTAL_DAYS, dayCollection, dayHref, getDays, sectionsFrom, type Day } from '@/lib/content';
+import { paragraphs, paragraphHtml } from '@/lib/format';
+import type { CollectionId } from '@/data/collections';
+
+interface Props {
+  day: Day;
+  locked?: CollectionId[];
+}
+
+const { day, locked = [] } = Astro.props;
+const d = day.data;
+const n = d.day;
+const collection = dayCollection(n);
+const { Content, headings } = await render(day);
+
+const sections = [
+  { id: 'lesson', label: 'Lesson' },
+  ...sectionsFrom(headings),
+  { id: 'passage', label: 'The passage' },
+  { id: 'reflect', label: 'Reflect' },
+];
+
+const base = dayHref(n);
+const allDays = await getDays();
+const titleOf = (k: number) => allDays.find((x) => x.data.day === k)?.data.title ?? '';
+const prev = n > 1 ? { href: dayHref(n - 1), dir: `Day ${n - 1}`, label: titleOf(n - 1) } : null;
+const next =
+  n < TOTAL_DAYS
+    ? n === CORE_DAYS
+      ? { href: '/more', dir: 'Keep going', label: 'Five More' }
+      : { href: dayHref(n + 1), dir: `Day ${n + 1}`, label: titleOf(n + 1) }
+    : null;
+const lastDayOfSet = n === CORE_DAYS || n === TOTAL_DAYS;
+---
+
+<Lesson
+  title={`Day ${n}: ${d.title}`}
+  back={{ href: collection.href, label: collection.name }}
+  sections={sections}
+  collection={collection.id}
+  locked={locked}
+>
+  <SameDayNote client:load day={n} />
+
+  <header class="day-head" id="lesson">
+    <p class="day-head__meta">
+      <span>Day {n}</span>
+      <span aria-hidden="true">·</span>
+      <span>{d.estimated_minutes} minutes</span>
+      {d.placeholder && <span class="pill pill--sample" title="Sample content, to be replaced">Sample</span>}
+    </p>
+    <div class="day-head__row">
+      <h1 class="day-head__title serif">{d.title}</h1>
+      <Complete client:load day={n} variant="icon" />
+    </div>
+    <p class="day-head__technique">{d.technique}</p>
+  </header>
+
+  <div class="prose">
+    <Content />
+  </div>
+
+  <section id="passage" class="day-section" aria-labelledby="passage-h">
+    <h2 id="passage-h" class="day-section__h serif">The passage</h2>
+    <figure class="passage">
+      <blockquote class="passage__text serif">
+        {paragraphs(d.passage).map((p) => <p set:html={paragraphHtml(p)} />)}
+      </blockquote>
+      <figcaption class="passage__source">
+        <span class="passage__author">{d.source.author}</span>
+        <span>
+          <cite>{d.source.work}</cite>, {d.source.year}{d.source.chapter && ` · ${d.source.chapter}`}
+          {d.source.translator && ` · translated by ${d.source.translator}`}
+        </span>
+      </figcaption>
+    </figure>
+    <div class="passage__actions">
+      <a class="button" href={`${base}/copy`}>
+        <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+          <path d="M2.5 5.5V2.5h3M13.5 5.5V2.5h-3M2.5 10.5v3h3M13.5 10.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Open copy mode
+      </a>
+      <a class="button button--quiet" href={`${base}/print?auto=1`} target="_blank" rel="noopener">
+        Print the passage
+      </a>
+    </div>
+  </section>
+
+  <section id="reflect" class="day-section" aria-labelledby="reflect-h">
+    <h2 id="reflect-h" class="day-section__h serif">Reflect</h2>
+    <p class="reflect__prompt serif">{d.reflection}</p>
+    <p class="reflect__hint">Answer by hand, in a few sentences, under the passage you copied.</p>
+  </section>
+
+  <div class="day-complete">
+    <Complete
+      client:load
+      day={n}
+      variant="button"
+      note={lastDayOfSet ? undefined : `Day ${n + 1} will keep until tomorrow.`}
+      nextHref="/library"
+      nextLabel="Back to the library"
+    />
+  </div>
+
+  <nav class="day-pager" aria-label="Days">
+    {
+      prev ? (
+        <a class="day-pager__link" href={prev.href} rel="prev">
+          <span class="day-pager__dir">← {prev.dir}</span>
+          {prev.label}
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    {
+      next && (
+        <a class="day-pager__link day-pager__link--next" href={next.href} rel="next">
+          <span class="day-pager__dir">{next.dir} →</span>
+          {next.label}
+        </a>
+      )
+    }
+  </nav>
+</Lesson>
+
+<style>
+  .day-head {
+    margin-bottom: var(--space-7);
+    scroll-margin-top: var(--space-8);
+  }
+
+  .day-head__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    color: var(--grey);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pill--sample {
+    margin-left: var(--space-2);
+    color: var(--grey-faint);
+  }
+
+  .day-head__row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .day-head__title {
+    font-size: var(--text-h1);
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  .day-head__row :global(.complete-icon) {
+    margin-top: 0.6rem;
+  }
+
+  .day-head__technique {
+    margin-top: var(--space-4);
+    color: var(--grey);
+    font-size: var(--text-body);
+  }
+
+  .day-section {
+    margin-top: var(--space-8);
+    scroll-margin-top: var(--space-8);
+  }
+
+  .day-section__h {
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-6);
+    border-bottom: 1px solid var(--hairline);
+    font-size: var(--text-h2);
+    line-height: 1.2;
+  }
+
+  /* The passage: set like a page from the book */
+  .passage {
+    margin: 0;
+  }
+
+  .passage__text {
+    margin: 0;
+    color: var(--ink);
+    font-size: var(--text-passage);
+    line-height: 1.7;
+    hanging-punctuation: first;
+    font-variant-ligatures: common-ligatures;
+  }
+
+  .passage__text p + p {
+    text-indent: 1.5em;
+  }
+
+  .passage__source {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin-top: var(--space-5);
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+
+  .passage__author {
+    color: var(--ink);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .passage__source cite {
+    font-style: italic;
+  }
+
+  .passage__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+  }
+
+  .reflect__prompt {
+    color: var(--ink);
+    font-size: 1.375rem;
+    font-style: italic;
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+
+  .reflect__hint {
+    margin-top: var(--space-4);
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+
+  .day-complete {
+    margin-top: var(--space-8);
+    padding-top: var(--space-7);
+    border-top: 1px solid var(--hairline);
+  }
+
+  .day-pager {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+  }
+
+  .day-pager__link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    color: var(--ink);
+    font-size: var(--text-base);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .day-pager__link--next {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .day-pager__dir {
+    color: var(--grey-faint);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .day-pager__link:hover .day-pager__dir {
+    color: var(--grey);
+  }
+</style>
+
+<style is:global>
+  /* Island styles (Complete, SameDayNote) */
+  .complete-icon {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--grey);
+    cursor: pointer;
+    transition: color 160ms ease, background-color 160ms ease;
+  }
+
+  .complete-icon:hover {
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+
+  .complete-icon.is-done {
+    color: var(--ink);
+  }
+
+  .complete-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  .complete-button {
+    min-height: 3.25rem;
+    padding: 0 var(--space-6) 0 var(--space-5);
+    font-size: var(--text-base);
+  }
+
+  .complete-button svg {
+    color: var(--paper);
+  }
+
+  .complete-button.is-done {
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+
+  .complete-button.is-done svg {
+    color: var(--ink);
+  }
+
+  .complete-confirm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35em;
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+
+  .complete-confirm a {
+    color: var(--ink);
+  }
+
+  .complete-undo {
+    margin-left: var(--space-2);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--grey-faint);
+    font-size: var(--text-xs);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    cursor: pointer;
+  }
+
+  .same-day-note {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    margin-bottom: var(--space-7);
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    color: var(--ink-soft);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+  }
+
+  .same-day-note button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    cursor: pointer;
+  }
+</style>

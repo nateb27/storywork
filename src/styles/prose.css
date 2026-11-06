@@ -1,0 +1,77 @@
+/* Long-form reading: lesson bodies and Method chapters */
+
+.prose {
+  color: var(--ink-soft);
+  font-size: var(--text-body);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.prose > * + * {
+  margin-top: 1.15em;
+}
+
+.prose h2 {
+  margin-top: var(--space-8);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-optical-sizing: auto;
+  font-size: var(--text-h2);
+  font-weight: 400;
+  line-height: 1.2;
+  scroll-margin-top: var(--space-8);
+}
+
+.prose h2 + * {
+  margin-top: var(--space-5);
+}
+
+.prose h3 {
+  margin-top: var(--space-6);
+  color: var(--ink);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.25em;
+}
+
+.prose li + li {
+  margin-top: 0.5em;
+}
+
+.prose li::marker {
+  color: var(--grey-faint);
+}
+
+.prose a {
+  color: var(--ink);
+}
+
+.prose strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose blockquote {
+  padding-left: var(--space-5);
+  border-left: 2px solid var(--hairline);
+  color: var(--grey);
+  font-family: var(--serif);
+  font-size: 1.125em;
+}
+
+.prose hr {
+  width: 2.5rem;
+  margin: var(--space-7) auto;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+}

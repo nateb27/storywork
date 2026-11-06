@@ -1,0 +1,23 @@
+---
+import Base from '@/layouts/Base.astro';
+import CopyMode from '@/components/copy/CopyMode';
+import { dayHref, type Day } from '@/lib/content';
+
+interface Props {
+  day: Day;
+}
+const { day } = Astro.props;
+const d = day.data;
+---
+
+<Base title={`Copy · Day ${d.day}`}>
+  <CopyMode
+    client:load
+    passage={d.passage}
+    dayLabel={`Day ${d.day}`}
+    title={d.title}
+    author={d.source.author}
+    work={d.source.work}
+    backHref={`${dayHref(d.day)}#passage`}
+  />
+</Base>

@@ -1,0 +1,10 @@
+---
+import PrintPage from '@/components/day/PrintPage.astro';
+import { getDay, parseDayParam } from '@/lib/content';
+
+const n = parseDayParam(Astro.params.n, 'ten');
+const day = n ? await getDay(n) : undefined;
+if (!day) return Astro.rewrite('/404');
+---
+
+<PrintPage day={day} />

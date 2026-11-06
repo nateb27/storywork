@@ -1,0 +1,98 @@
+---
+import { render } from 'astro:content';
+import Lesson from '@/layouts/Lesson.astro';
+import { getMethod, sectionsFrom } from '@/lib/content';
+
+const chapters = await getMethod();
+const index = chapters.findIndex((c) => c.id === Astro.params.slug);
+const chapter = chapters[index];
+if (!chapter) return Astro.rewrite('/404');
+
+const { Content, headings } = await render(chapter);
+const prev = chapters[index - 1];
+const next = chapters[index + 1];
+---
+
+<Lesson
+  title={chapter.data.title}
+  back={{ href: '/method', label: 'The Method' }}
+  sections={sectionsFrom(headings)}
+  collection="method"
+>
+  <header class="chapter-head">
+    <p class="chapter-head__meta">
+      The Method · {index + 1} of {chapters.length}
+      {chapter.data.placeholder && <span class="pill pill--sample">Sample</span>}
+    </p>
+    <h1 class="serif">{chapter.data.title}</h1>
+  </header>
+  <div class="prose">
+    <Content />
+  </div>
+  <nav class="chapter-pager" aria-label="Chapters">
+    {prev ? <a href={`/method/${prev.id}`} rel="prev"><span>Previous</span>{prev.data.title}</a> : <span />}
+    {
+      next ? (
+        <a class="next" href={`/method/${next.id}`} rel="next"><span>Next</span>{next.data.title}</a>
+      ) : (
+        <a class="next" href="/days/1"><span>Begin</span>Day 1</a>
+      )
+    }
+  </nav>
+</Lesson>
+
+<style>
+  .chapter-head {
+    margin-bottom: var(--space-7);
+  }
+
+  .chapter-head__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+    color: var(--grey);
+    font-size: var(--text-sm);
+  }
+
+  .pill--sample {
+    color: var(--grey-faint);
+  }
+
+  h1 {
+    font-size: var(--text-h1);
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  .chapter-pager {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-top: var(--space-9);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--hairline);
+  }
+
+  .chapter-pager a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    color: var(--ink);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .chapter-pager a.next {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .chapter-pager span {
+    color: var(--grey-faint);
+    font-size: var(--text-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+</style>

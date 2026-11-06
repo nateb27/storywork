@@ -1,15 +1,18 @@
 ---
 import Library from '@/layouts/Library.astro';
 import TallyProgress from '@/components/ui/TallyProgress.astro';
+import { getDay, dayHref } from '@/lib/content';
 
-// Milestone 1 placeholder: wired to real content and progress later.
-const today = {
-  day: 1,
-  title: 'The First Sentence',
-  summary: 'How an opening line makes a promise the rest of the book has to keep.',
-  href: '/days',
-};
+// The member's next unfinished day; progress arrives in milestone 3.
 const done = 0;
+const next = await getDay(done + 1);
+if (!next) throw new Error('Day content missing');
+const today = {
+  day: next.data.day,
+  title: next.data.title,
+  summary: next.data.summary,
+  href: dayHref(next.data.day),
+};
 ---
 
 <Library title="Library">
